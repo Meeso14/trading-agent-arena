@@ -29,6 +29,14 @@ jobs:
       - name: Syntax check
         run: node --check core.js && node --check alpaca.js && node --check server.js && node --check public/app.js && node --check desktop/main.js
 
+      - name: Create the release (once) so uploads don't race
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VER=$(node -p "require('./package.json').version")
+          gh release view "v$VER" >/dev/null 2>&1 || gh release create "v$VER" --title "$VER" --notes "Trading Agent Arena $VER" --target "$GITHUB_SHA"
+
       - name: Build and publish
         shell: bash
         env:
