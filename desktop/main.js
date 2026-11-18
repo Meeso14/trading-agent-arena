@@ -22,8 +22,11 @@ let win = null, srv = null;
 let updateState = { state: 'idle' };
 
 // ---------- single instance ----------
-if (!app.requestSingleInstanceLock()) { app.quit(); }
-app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
+// If the app is already open, a second launch (e.g. double-clicking the shortcut again)
+// just brings the existing window forward and exits immediately.
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) app.exit(0);
+app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.show(); win.focus(); } });
 
 // ---------- prefs + secrets ----------
 function readJson(p, d) { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch (_) { return d; } }
@@ -107,8 +110,9 @@ async function createWindow() {
   setInterval(check, 3 * 60 * 60 * 1000); // every 3 hours
 }
 
+function closeServer() { if (srv) { const s = srv; srv = null; s.close(); } }
 function restartApp() {
-  if (srv) srv.close();
+  closeServer();
   app.relaunch(); app.exit(0);
 }
 
@@ -139,7 +143,7 @@ ipcMain.handle('keys:save', async (_e, k) => {
 ipcMain.handle('update:check', () => { check(); return updateState; });
 ipcMain.handle('update:install', () => {
   if (updateState.state !== 'ready') return false;
-  if (srv) srv.close(); // save progress first
+  closeServer(); // save progress first
   setImmediate(() => autoUpdater.quitAndInstall(true, true)); // silent install, then reopen
   return true;
 });
@@ -153,9 +157,9 @@ ipcMain.handle('update:setRepo', (_e, repo) => {
 ipcMain.handle('app:openData', () => shell.openPath(userDir));
 
 // ---------- lifecycle ----------
-app.whenReady().then(createWindow).catch((e) => {
+if (gotLock) app.whenReady().then(createWindow).catch((e) => {
   dialog.showErrorBox('Trading Agent Arena could not start', String(e && e.stack || e));
   app.quit();
 });
-app.on('window-all-closed', () => { if (srv) srv.close(); app.quit(); });
+app.on('window-all-closed', () => { closeServer(); app.quit(); });
 app.on('before-quit', () => { if (srv) srv.saveNow(); });

@@ -1,7 +1,7 @@
 {
   "name": "trading-agent-arena",
   "productName": "Trading Agent Arena",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A game-style AI trading agent for Alpaca (stocks + crypto) with personality, XP and self-learning strategies.",
   "author": "Landon",
   "main": "desktop/main.js",
