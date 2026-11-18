@@ -1,9 +1,8 @@
 # Builds the Windows installer and publishes it as a GitHub Release.
 # Every installed copy of the app checks these releases and updates itself.
 #
-# To ship an update:  bump "version" in package.json, commit, then push a tag like v1.0.1
-#   npm version patch      (bumps version + creates the tag)
-#   git push --follow-tags
+# To ship an update: bump "version" in package.json, commit, then tag the commit (e.g. v1.0.2)
+# in GitHub Desktop (History > right-click > Create Tag) and Push origin.
 name: Release
 
 on:
@@ -31,6 +30,7 @@ jobs:
         run: node --check core.js && node --check alpaca.js && node --check server.js && node --check public/app.js && node --check desktop/main.js
 
       - name: Build and publish
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # Points the app's updater at THIS repo automatically, whatever its name or owner.
