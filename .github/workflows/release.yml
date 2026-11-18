@@ -1,0 +1,37 @@
+# Builds the Windows installer and publishes it as a GitHub Release.
+# Every installed copy of the app checks these releases and updates itself.
+#
+# To ship an update:  bump "version" in package.json, commit, then push a tag like v1.0.1
+#   npm version patch      (bumps version + creates the tag)
+#   git push --follow-tags
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Syntax check
+        run: node --check core.js && node --check alpaca.js && node --check server.js && node --check public/app.js && node --check desktop/main.js
+
+      - name: Build and publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Points the app's updater at THIS repo automatically, whatever its name or owner.
+        run: npx electron-builder --win --x64 --publish always -c.publish.provider=github -c.publish.owner=${{ github.repository_owner }} -c.publish.repo=${{ github.event.repository.name }} -c.publish.releaseType=release

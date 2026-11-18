@@ -1,0 +1,70 @@
+{
+  "name": "trading-agent-arena",
+  "productName": "Trading Agent Arena",
+  "version": "1.0.1",
+  "description": "A game-style AI trading agent for Alpaca (stocks + crypto) with personality, XP and self-learning strategies.",
+  "author": "Landon",
+  "main": "desktop/main.js",
+  "scripts": {
+    "start": "node server.js",
+    "app": "electron .",
+    "demo": "node build-demo.js",
+    "dist": "electron-builder --win --x64 --publish never",
+    "release": "electron-builder --win --x64 --publish always"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11"
+  },
+  "devDependencies": {
+    "electron": "^45.3.4",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "com.landon.tradingagentarena",
+    "productName": "Trading Agent Arena",
+    "copyright": "Landon",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "core.js",
+      "alpaca.js",
+      "server.js",
+      "public/**/*",
+      "desktop/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "Trading-Agent-Arena-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "Trading Agent Arena",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "YOUR_GITHUB_USERNAME",
+      "repo": "trading-agent-arena",
+      "releaseType": "release"
+    }
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

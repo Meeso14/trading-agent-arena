@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trading Agent Arena</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="demoBanner" class="demo-banner" hidden>DEMO MODE · simulated market, no real or paper orders · run the app locally to connect Alpaca</div>
+
+<header class="hud">
+  <div class="hud-id">
+    <div class="lvl-badge"><span class="lvl-label">LV</span><span id="lvl">1</span></div>
+    <div class="hud-name">
+      <div class="name-row"><span id="agentName">Byte</span><span id="agentTitle" class="title-chip">Rookie</span></div>
+      <div class="xpbar"><div id="xpFill"></div><span id="xpText">0 / 40 XP</span></div>
+    </div>
+  </div>
+  <div class="hud-stats">
+    <div class="stat"><label>Equity</label><b id="equity">—</b></div>
+    <div class="stat"><label>Today</label><b id="dayPnl">—</b></div>
+    <div class="stat"><label>Total P&amp;L</label><b id="totPnl">—</b></div>
+    <div class="stat"><label>Win rate</label><b id="winRate">—</b></div>
+    <div class="stat"><label>Trades today</label><b id="tradesToday">—</b></div>
+  </div>
+  <div class="hud-controls">
+    <button id="updChip" class="upd-chip" hidden></button>
+    <span id="modePill" class="mode-pill">SIM</span>
+    <button id="btnRun" class="btn btn-go">▶ START</button>
+    <button id="btnKill" class="btn btn-kill" title="Stop the agent and close every position it opened">⏻ KILL</button>
+    <button id="btnSettings" class="btn btn-ghost" title="Settings">⚙</button>
+  </div>
+</header>
+
+<main class="grid">
+  <!-- AGENT -->
+  <section class="panel agent-panel">
+    <div class="stage">
+      <div id="bubble" class="bubble"><span id="bubbleText">...</span></div>
+      <canvas id="agentCanvas" width="320" height="300" title="Poke me"></canvas>
+      <div id="fx" class="fx"></div>
+      <div class="mood-row"><span class="mood-dot"></span><span id="moodLabel">CHILL</span><span id="streak" class="streak"></span></div>
+    </div>
+    <div class="traits">
+      <div class="trait"><label>Boldness</label><div class="tbar"><div id="tBold"></div></div></div>
+      <div class="trait"><label>Patience</label><div class="tbar"><div id="tPat"></div></div></div>
+      <div class="trait"><label>Curiosity</label><div class="tbar"><div id="tCur"></div></div></div>
+    </div>
+    <div class="live-box">
+      <div class="panel-title">⚡ Real-money unlock</div>
+      <ul id="liveReqs" class="reqs"></ul>
+      <button id="btnLive" class="btn btn-live" disabled>LOCKED</button>
+    </div>
+  </section>
+
+  <!-- ARENA -->
+  <section class="panel arena-panel">
+    <div class="panel-title row"><span>🏟 Market arena</span><span id="clock" class="muted small"></span></div>
+    <div id="connBanner" class="conn-banner" hidden></div>
+    <div id="watchlist" class="watchlist"></div>
+    <div class="chart-wrap">
+      <div class="chart-head"><b id="chartSym">—</b><span id="chartInfo" class="muted small"></span></div>
+      <canvas id="chart" width="800" height="300"></canvas>
+      <div class="legend small muted"><span class="lg buy">▲ buy</span><span class="lg win">▼ sell (win)</span><span class="lg loss">▼ sell (loss)</span><span class="lg tp">— take-profit</span><span class="lg sl">— stop-loss</span></div>
+    </div>
+    <div class="panel-title">🎒 Inventory</div>
+    <div id="positions" class="positions"></div>
+  </section>
+
+  <!-- DECK -->
+  <section class="panel deck-panel">
+    <div class="panel-title row"><span>🃏 Strategy deck</span><span class="muted small" title="The agent samples each strategy's track record (Thompson sampling) to pick which one to trust next, invents mutated variants, and retires losers.">how it learns ⓘ</span></div>
+    <div id="deck" class="deck"></div>
+    <details class="graveyard"><summary>🪦 Graveyard <span id="graveCount"></span></summary><div id="grave" class="deck"></div></details>
+  </section>
+
+  <!-- LOG -->
+  <section class="panel log-panel">
+    <div class="tabs">
+      <button class="tab on" data-tab="log">⚔ Battle log</button>
+      <button class="tab" data-tab="brain">🧠 Brain journal</button>
+      <button class="tab" data-tab="ach">🏆 Achievements <span id="achCount"></span></button>
+    </div>
+    <div id="tab-log" class="tabbody log"></div>
+    <div id="tab-brain" class="tabbody log" hidden></div>
+    <div id="tab-ach" class="tabbody ach" hidden></div>
+  </section>
+</main>
+
+<!-- SETTINGS -->
+<div id="settingsModal" class="modal" hidden>
+  <div class="modal-card">
+    <div class="modal-head"><b>⚙ Agent settings</b><button class="btn btn-ghost" data-close>✕</button></div>
+    <div class="modal-body">
+      <div id="deskConn" class="desk-box" hidden>
+        <div class="panel-title">🔌 Alpaca connection <span id="connStatus" class="muted small"></span></div>
+        <p class="muted small">Get free keys at <a href="https://app.alpaca.markets" target="_blank" rel="noopener">app.alpaca.markets</a> → Paper account → API Keys. Keys are stored encrypted on this PC and only sent to Alpaca.</p>
+        <div class="field"><label>Paper API key ID</label><input id="kPaperId" autocomplete="off" spellcheck="false" placeholder="PK..."></div>
+        <div class="field"><label>Paper secret key</label><input id="kPaperSecret" type="password" autocomplete="off" placeholder="••••••••"></div>
+        <details class="live-keys"><summary>⚡ Live keys (real money, optional)</summary>
+          <div class="field"><label>Live API key ID</label><input id="kLiveId" autocomplete="off" spellcheck="false" placeholder="AK..."></div>
+          <div class="field"><label>Live secret key</label><input id="kLiveSecret" type="password" autocomplete="off" placeholder="••••••••"></div>
+          <label class="check"><input id="kAllowLive" type="checkbox"> Allow the Go Live button (it still needs level 5, 20+ profitable paper trades and typing GO LIVE)</label>
+        </details>
+        <div class="inline wrap"><button id="btnSaveKeys" class="btn btn-go">Save &amp; reconnect</button><button id="btnClearPaper" class="btn btn-ghost">Remove paper keys</button><button id="btnClearLive" class="btn btn-ghost">Remove live keys</button></div>
+        <p id="keysMsg" class="err"></p>
+      </div>
+      <div id="deskUpd" class="desk-box" hidden>
+        <div class="panel-title">🔄 Updates <span id="verLabel" class="muted small"></span></div>
+        <p id="updStatus" class="small"></p>
+        <div class="field"><label>Update source (GitHub owner/repo)</label><div class="inline"><input id="updRepo" placeholder="your-github-name/trading-agent-arena" spellcheck="false"><button id="btnSaveRepo" class="btn">Save</button></div></div>
+        <div class="inline wrap"><button id="btnCheckUpd" class="btn">Check now</button><button id="btnInstallUpd" class="btn btn-go" hidden>Restart &amp; update</button><button id="btnOpenData" class="btn btn-ghost">Open data folder</button></div>
+      </div>
+      <div class="field"><label>Agent name</label><div class="inline"><input id="nameInput" maxlength="16"><button id="btnRename" class="btn">Save</button></div></div>
+      <div class="field"><label>Watchlist <span class="muted small">(stocks like AAPL, crypto like BTC/USD)</span></label>
+        <div id="wlEdit" class="chips"></div>
+        <div class="inline"><input id="symInput" placeholder="e.g. TSLA or SOL/USD"><button id="btnAddSym" class="btn">Add</button></div>
+      </div>
+      <div id="speedField" class="field"><label>Simulation speed <b id="speedVal">1×</b></label><input id="speed" type="range" min="0.5" max="10" step="0.5" value="1"></div>
+      <div class="panel-title">🛡 Risk rules <span class="muted small">(the agent can never break these)</span></div>
+      <div id="riskFields"></div>
+    </div>
+  </div>
+</div>
+
+<!-- GO LIVE -->
+<div id="liveModal" class="modal" hidden>
+  <div class="modal-card danger">
+    <div class="modal-head"><b>⚡ Switch to REAL money</b><button class="btn btn-ghost" data-close>✕</button></div>
+    <div class="modal-body">
+      <p>The agent will place real orders on your Alpaca <b>live</b> account. Each trade is capped at <b id="liveCap">$25</b>, and the daily loss limit and stop-losses still apply. Past paper results don't guarantee anything with real money. Only trade money you can afford to lose.</p>
+      <p>The agent starts paused after switching. Type <b>GO LIVE</b> to confirm.</p>
+      <div class="inline"><input id="liveConfirm" placeholder="GO LIVE"><button id="btnLiveConfirm" class="btn btn-kill">Switch to live</button></div>
+      <p id="liveErr" class="err"></p>
+    </div>
+  </div>
+</div>
+
+<div id="toasts" class="toasts"></div>
+<div id="levelUp" class="levelup" hidden><div>LEVEL UP!</div><small id="levelUpSub"></small></div>
+
+<script src="core.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
